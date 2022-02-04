@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
+import logging
 import os
 import environ
 from pathlib import Path
@@ -19,6 +19,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env()
 env_file = os.path.join(BASE_DIR, ".env")
+print("ENV FIle", env_file)
 if os.path.exists(env_file):
     environ.Env.read_env(env_file)
 
@@ -59,6 +60,7 @@ INSTALLED_APPS = [
     "polaris",
     "sep_10",
     "sep_12",
+    "sep_24",
     "integration_app"
 ]
 
@@ -103,9 +105,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'stellar',
         'USER': 'postgres',
-        'PASSWORD': 'password',
+        'PASSWORD': 'postgres',
         'HOST': 'localhost',
-        'PORT': '5432'
+        'PORT': '5438'
     }
 }
 

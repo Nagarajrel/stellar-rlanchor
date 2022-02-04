@@ -7,6 +7,21 @@ from sep_12.models import Customer, CustomerStellarAccount
 
 
 class MyCustomerIntegration(CustomerIntegration):
+    def delete(self, token: SEP10Token, request: Request, account: str, memo: Optional[str], memo_type: Optional[str],
+               *args: List, **kwargs: Dict):
+        pass
+
+    def put_verification(self, token: SEP10Token, request: Request, account: str, params: Dict, *args: List,
+                         **kwargs: Dict) -> Dict:
+        pass
+
+    def callback(self, token: SEP10Token, request: Request, params: Dict, *args: List, **kwargs: Dict):
+        pass
+
+    def more_info_url(self, token: SEP10Token, request: Request, account: str, *args: List, memo: Optional[int] = None,
+                      **kwargs: Dict) -> str:
+        pass
+
     def put(self, token: SEP10Token, request: Request, params: Dict, *args, **kwargs) -> str:
         if params.get("id"):
             user = Customer.objects.get(id=params.get("id"))
@@ -64,5 +79,4 @@ class MyCustomerIntegration(CustomerIntegration):
             if not user:
                 raise ObjectDoesNotExist("customer not found with id %s", params.get("id"))
         else:
-            
-        return {}
+            return {"user":"sas"}

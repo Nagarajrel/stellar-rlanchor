@@ -14,5 +14,6 @@ class IntegrationAppConfig(AppConfig):
         register_integrations(
             toml=toml,
             rails=MyRailsIntegration(),
-            sep31_receiver=MySEP31ReceiverIntegration()
+            sep31_receiver=MySEP31ReceiverIntegration(),
+            customer=MyCustomerIntegration(),
         )
