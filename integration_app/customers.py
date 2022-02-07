@@ -10,7 +10,7 @@ from polaris.integrations import registered_customer_integration as rci
 from rest_framework.response import Response
 
 logger = getLogger(__name__)
-@
+
 class MyCustomerIntegration(CustomerIntegration):
     def put(self, token: SEP10Token, request: Request, params: Dict, *args, **kwargs) -> str:
         if params.get("id"):
