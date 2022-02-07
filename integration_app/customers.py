@@ -66,3 +66,5 @@ class MyCustomerIntegration(CustomerIntegration):
         else:
             
         return {}
+        
+    # delete
