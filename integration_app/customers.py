@@ -64,7 +64,13 @@ class MyCustomerIntegration(CustomerIntegration):
             if not user:
                 raise ObjectDoesNotExist("customer not found with id %s", params.get("id"))
         else:
-            
-        return {}
+            return {}
         
     # delete
+    def delete(self,SEP10Token,request,account,memo,memo_type,*arg,**kwargs):
+
+        account = CustomerStellarAccount.objects.get(account=account,memo=memo,memo_type=memo_type)
+        if account:
+            account.delete()
+        else:
+            raise ObjectDoesNotExist("account does not exit")
