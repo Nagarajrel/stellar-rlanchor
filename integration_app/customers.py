@@ -10,7 +10,6 @@ from polaris.integrations import registered_customer_integration as rci
 from rest_framework.response import Response
 
 logger = getLogger(__name__)
-@
 class MyCustomerIntegration(CustomerIntegration):
     def put(self, token: SEP10Token, request: Request, params: Dict, *args, **kwargs) -> str:
         if params.get("id"):
@@ -96,7 +95,14 @@ class MyCustomerIntegration(CustomerIntegration):
 
         return Response(response_data)
     # delete
+    @validate_sep10_token()
+    def delete(self,SEP10Token,request,account,memo,memo_type,*arg,**kwargs):
 
+        account = CustomerStellarAccount.objects.get(account=account,memo=memo,memo_type=memo_type)
+        if account:
+            account.delete()
+        else:
+            raise ObjectDoesNotExist("account does not exit")
 
 def validate_response_data(data: Dict):
     attrs = ["fields", "id", "message", "status", "provided_fields"]
