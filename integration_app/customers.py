@@ -1,5 +1,6 @@
 from polaris.integrations import CustomerIntegration
 from polaris.sep10.token import SEP10Token
+from polaris.sep10.utils import validate_sep10_token
 from polaris.utils import render_error_response, extract_sep9_fields,getLogger
 from rest_framework.request import Request
 from typing import Dict, Optional, List
