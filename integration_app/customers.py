@@ -1,11 +1,16 @@
+from django.core.validators import URLValidator
+from polaris import settings
 from polaris.integrations import CustomerIntegration
+from polaris.models import Transaction
 from polaris.sep10.token import SEP10Token
 from polaris.sep10.utils import validate_sep10_token
-from polaris.utils import render_error_response, extract_sep9_fields, getLogger
+from polaris.utils import render_error_response, extract_sep9_fields, getLogger, make_memo
+from rest_framework.decorators import api_view, renderer_classes, parser_classes
+
 from rest_framework.request import Request
 from typing import Dict, Optional, List
-from django.core.exceptions import ObjectDoesNotExist
-from sep_12.models import Customer, CustomerStellarAccount
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from sep_12.models import Customer,CustomerStellarAccount
 from polaris.integrations import registered_customer_integration as rci
 from rest_framework.response import Response
 
@@ -111,6 +116,77 @@ class MyCustomerIntegration(CustomerIntegration):
         else:
 
             raise ObjectDoesNotExist("account does not exit")
+
+    @api_view(["PUT"])
+    @validate_sep10_token()
+    def callback(self, token: SEP10Token, request: Request) -> Response:
+        if request.data.get("id"):
+            if not isinstance(request.data.get("id"), str):
+                return render_error_response("bad ID value, expected str")
+            elif (
+                    request.data.get("account")
+                    or request.data.get("memo")
+                    or request.data.get("memo_type")
+            ):
+                return render_error_response("requests with 'id' cannot also have 'account', 'memo', or 'memo_type'",
+                                             status_code=400)
+        elif request.data.get("account") != (token.muxed_account or token.account):
+            return render_error_response("The account specified does not match authorization token", status_code=403)
+        elif (
+                token.memo
+                and request.data.get("memo")
+                and (
+                        str(token.memo) != str(request.data.get("memo"))
+                        or request.data.get("memo_type") != Transaction.MEMO_TYPES.id
+                )
+        ):
+            return render_error_response(
+                "The memo specified does not match the memo ID authorized via SEP-10",
+                status_code=403,
+            )
+
+        try:
+            # validate memo and memo_type
+            make_memo(request.data.get("memo"), request.data.get("memo_type"))
+        except (ValueError, TypeError):
+            return render_error_response(_("invalid 'memo' for 'memo_type'"))
+
+        memo = request.data.get("memo") or token.memo
+        memo_type = None
+        if memo:
+            memo_type = request.data.get("memo_type") or Transaction.MEMO_TYPES.id
+            if memo_type == Transaction.MEMO_TYPES.id:
+                memo = int(memo)
+
+        callback_url = request.data.get("url")
+        if not callback_url:
+            return render_error_response("callback 'url' required", status_code=500)
+        schemes = ["https"] if not settings.LOCAL_MODE else ["https", "http"]
+        try:
+            URLValidator(schemes=schemes)(request.data.get("url"))
+        except ValidationError:
+            return render_error_response("'url' must be a valid URL")
+
+        try:
+            rci.callback(
+                token=token,
+                request=request,
+                params={
+                    "id": request.data.get("id"),
+                    "account": token.muxed_account or token.account,
+                    "memo": memo,
+                    "memo_type": memo_type,
+                    "url": callback_url,
+                },
+            )
+        except ValueError as e:
+            return render_error_response(str(e), status_code=400)
+        except ObjectDoesNotExist as e:
+            return render_error_response(str(e), status_code=404)
+        except NotImplementedError:
+            return render_error_response("not implemented", status_code=501)
+
+        return Response({"success": True})
 
 
 def validate_response_data(data: Dict):
