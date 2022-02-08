@@ -25,7 +25,7 @@ if os.path.exists(env_file):
 
 # Polaris active seps
 
-POLARIS_ACTIVE_SEPS = ["sep-1", "sep-6", "sep-10", "sep-12", "sep-24", "sep-31"]
+POLARIS_ACTIVE_SEPS = ['sep-1', 'sep-6', 'sep-10', 'sep-12', 'sep-24', 'sep-31']
 local_mode = env.bool("LOCAL_MODE", default=False)
 SESSION_COOKIE_SECURE = not local_mode
 
@@ -42,7 +42,7 @@ SECRET_KEY = 'django-insecure-)25o6uvxcvkvh&@=072r1fwfdk%)#%272@g1-o_c!wk-*$1j@_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -59,7 +59,7 @@ INSTALLED_APPS = [
     "polaris",
     "sep_10",
     "sep_12",
-    "integration_app"
+    "integration_app",
 ]
 
 MIDDLEWARE = [
@@ -104,11 +104,17 @@ DATABASES = {
         'NAME': 'stellar',
         'USER': 'postgres',
         'PASSWORD': 'password',
-        'HOST': 'localhost',
+        'HOST': 'db',
         'PORT': '5432'
     }
 }
 
+# DATABASES = {
+#     "default": env.db(
+#         "DATABASE_URL",
+#         default="sqlite:///" + os.path.join(BASE_DIR, "data/db.sqlite3"),
+#     )
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators

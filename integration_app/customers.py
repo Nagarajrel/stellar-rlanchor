@@ -64,5 +64,5 @@ class MyCustomerIntegration(CustomerIntegration):
             if not user:
                 raise ObjectDoesNotExist("customer not found with id %s", params.get("id"))
         else:
-            
+            pass
         return {}
