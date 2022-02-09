@@ -4,7 +4,7 @@ from rest_framework.request import Request
 
 from polaris.integrations import SEP31ReceiverIntegration
 from polaris.models import Asset, Transaction
-# from sep_12.models import Customer, CustomerStellarAccount
+# from sep12.models import Customer, CustomerStellarAccount
 from polaris.sep10.token import SEP10Token
 
 

@@ -3,10 +3,25 @@ from polaris.sep10.token import SEP10Token
 from rest_framework.request import Request
 from typing import Dict, Optional, List
 from django.core.exceptions import ObjectDoesNotExist
-from sep_12.models import Customer, CustomerStellarAccount
+from models import Customer, CustomerStellarAccount
 
 
 class MyCustomerIntegration(CustomerIntegration):
+    def put_verification(self, token: SEP10Token, request: Request, account: str, params: Dict, *args: List,
+                         **kwargs: Dict) -> Dict:
+        pass
+
+    def delete(self, token: SEP10Token, request: Request, account: str, memo: Optional[str], memo_type: Optional[str],
+               *args: List, **kwargs: Dict):
+        pass
+
+    def callback(self, token: SEP10Token, request: Request, params: Dict, *args: List, **kwargs: Dict):
+        pass
+
+    def more_info_url(self, token: SEP10Token, request: Request, account: str, *args: List, memo: Optional[int] = None,
+                      **kwargs: Dict) -> str:
+        pass
+
     def put(self, token: SEP10Token, request: Request, params: Dict, *args, **kwargs) -> str:
         if params.get("id"):
             user = Customer.objects.get(id=params.get("id"))
@@ -22,7 +37,7 @@ class MyCustomerIntegration(CustomerIntegration):
                 memo_type=params.get("memo_type")
             )
             if not account:
-                if "email_address" not in params or "first_name" not in params or "last_name" not in params\
+                if "email_address" not in params or "first_name" not in params or "last_name" not in params \
                         or "phone_number" not in params:
                     raise ValueError(
                         "'first_name', 'last_name', 'phone_number' and 'email_address' are required."

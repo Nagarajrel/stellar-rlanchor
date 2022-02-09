@@ -2,12 +2,12 @@ from django.apps import AppConfig
 
 
 class IntegrationAppConfig(AppConfig):
-    name = "integration_app"
+    name = "integration"
 
     def ready(self):
-        from .toml import toml
-        from .rails import MyRailsIntegration
-        from .sep31 import MySEP31ReceiverIntegration
+        from .sep1.toml import toml
+        from .sep24.rails import MyRailsIntegration
+        from .sep31.sep31 import MySEP31ReceiverIntegration
         from polaris.integrations import register_integrations
         register_integrations(
             toml=toml,

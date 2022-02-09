@@ -57,9 +57,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "polaris",
-    "sep_10",
-    "sep_12",
-    "integration_app",
+    "integration",
 ]
 
 MIDDLEWARE = [
@@ -103,9 +101,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'stellar',
         'USER': 'postgres',
-        'PASSWORD': 'password',
-        'HOST': 'db',
-        'PORT': '5432'
+        'PASSWORD': 'postgres',
+        'HOST': 'localhost',
+        'PORT': '5438'
     }
 }
 
