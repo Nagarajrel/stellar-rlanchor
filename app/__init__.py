@@ -1,1 +1,1 @@
-# default_app_config = "app.apps.AnchorConfig"
+# default_app_config = "app.apps.MyappConfig"
