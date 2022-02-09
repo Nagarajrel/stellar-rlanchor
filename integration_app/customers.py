@@ -1,7 +1,7 @@
 from polaris.integrations import CustomerIntegration
 from polaris.sep10.token import SEP10Token
 from polaris.sep10.utils import validate_sep10_token
-from polaris.utils import render_error_response, extract_sep9_fields,getLogger
+from polaris.utils import render_error_response, extract_sep9_fields, getLogger
 from rest_framework.request import Request
 from typing import Dict, Optional, List
 from django.core.exceptions import ObjectDoesNotExist
@@ -10,7 +10,12 @@ from polaris.integrations import registered_customer_integration as rci
 from rest_framework.response import Response
 
 logger = getLogger(__name__)
+
+
 class MyCustomerIntegration(CustomerIntegration):
+
+    @staticmethod
+    @validate_sep10_token()
     def put(self, token: SEP10Token, request: Request, params: Dict, *args, **kwargs) -> str:
         if params.get("id"):
             user = Customer.objects.get(id=params.get("id"))
@@ -94,15 +99,18 @@ class MyCustomerIntegration(CustomerIntegration):
                 )
 
         return Response(response_data)
+
     # delete
     @validate_sep10_token()
-    def delete(self,SEP10Token,request,account,memo,memo_type,*arg,**kwargs):
+    def delete(self, SEP10Token, request, account, memo, memo_type, *arg, **kwargs):
 
-        account = CustomerStellarAccount.objects.get(account=account,memo=memo,memo_type=memo_type)
+        account = CustomerStellarAccount.objects.get(account=account, memo=memo, memo_type=memo_type)
         if account:
             account.delete()
         else:
             raise ObjectDoesNotExist("account does not exit")
+
+        
 
 def validate_response_data(data: Dict):
     attrs = ["fields", "id", "message", "status", "provided_fields"]
