@@ -1,11 +1,14 @@
 from django.core.validators import URLValidator
 from polaris import settings
+from django.core import serializers
 from polaris.integrations import CustomerIntegration
 from polaris.models import Transaction
 from polaris.sep10.token import SEP10Token
 from polaris.sep10.utils import validate_sep10_token
 from polaris.utils import render_error_response, extract_sep9_fields, getLogger, make_memo
 from rest_framework.decorators import api_view, renderer_classes, parser_classes
+from rest_framework.views import APIView
+import json
 
 from rest_framework.request import Request
 from typing import Dict, Optional, List
@@ -13,15 +16,79 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from sep_12.models import Customer,CustomerStellarAccount
 from polaris.integrations import registered_customer_integration as rci
 from rest_framework.response import Response
+from rest_framework import status
 
 logger = getLogger(__name__)
 
 
 class MyCustomerIntegration(CustomerIntegration):
-
-    @staticmethod
-    @validate_sep10_token()
-    def put(self, token: SEP10Token, request: Request, params: Dict, *args, **kwargs) -> str:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.required_fields = [
+            "account",
+            "first_name",
+            "last_name",
+            "email_address",
+            "bank_account_number",
+            "bank_number",
+        ]
+        self.accepted = {"status": "ACCEPTED"}
+        self.needs_basic_info = {
+            "status": "NEEDS_INFO",
+            "fields": {
+                "first_name": {
+                    "description": "first name of the customer",
+                    "type": "string",
+                },
+                "last_name": {
+                    "description": "last name of the customer",
+                    "type": "string",
+                },
+                "email_address": {
+                    "description": "email address of the customer",
+                    "type": "string",
+                },
+            },
+        }
+        self.needs_bank_info = {
+            "status": "NEEDS_INFO",
+            "fields": {
+                "bank_account_number": {
+                    "description": "bank account number of the customer",
+                    "type": "string",
+                },
+                "bank_number": {
+                    "description": "routing number of the customer",
+                    "type": "string",
+                },
+            },
+        }
+        self.needs_all_info = {
+            "status": "NEEDS_INFO",
+            "fields": {
+                "first_name": {
+                    "description": "first name of the customer",
+                    "type": "string",
+                },
+                "last_name": {
+                    "description": "last name of the customer",
+                    "type": "string",
+                },
+                "email_address": {
+                    "description": "email address of the customer",
+                    "type": "string",
+                },
+                "bank_account_number": {
+                    "description": "bank account number of the customer",
+                    "type": "string",
+                },
+                "bank_number": {
+                    "description": "routing number of the customer",
+                    "type": "string",
+                },
+            },
+        }
+    def put(self, token: SEP10Token, request: Request) -> str:
         if params.get("id"):
             user = Customer.objects.get(id=params.get("id"))
             if not user:
@@ -72,50 +139,100 @@ class MyCustomerIntegration(CustomerIntegration):
         user.save()
         return str(user.id)
 
-    @staticmethod
-    @validate_sep10_token()
-    def get(self, token: SEP10Token, request: Request, params: Dict, *args, **kwargs) -> Response:
-        """ get customer info api implemented for sep 12"""
+    def get(self, token: SEP10Token, request: Request, params: Dict, *args, **kwargs) -> Dict:
+        user = None
         if params.get("id"):
-            try:
-                response_data = rci.get(
-                    token=token,
-                    request=request,
-                    params={
-                        "id": request.GET.get("id"),
-                        "account": request.GET.get("account"),
-                        "type": request.GET.get("type"),
-                        "lang": request.GET.get("lang"),
-                    },
+            user = Customer.objects.filter(id=params["id"]).first()
+            if not user:
+                raise ObjectDoesNotExist(_("customer not found"))
+        elif params.get("account"):
+            if params["account"].startswith("M"):
+                stellar_account = MuxedAccount.from_account(
+                    params["account"]
+                ).account_id
+                muxed_account = params["account"]
+            else:
+                stellar_account = params["account"]
+                muxed_account = None
+            account = CustomerStellarAccount.objects.filter(
+                stellar_account=stellar_account,
+                muxed_account=muxed_account,
+                memo=params.get("memo"),
+                memo_type=params.get("memo_type"),
+            ).first()
+            user = account.user if account else None
+
+        if not user:
+            if params.get("type") in ["sep6-deposit", "sep31-sender", "sep31-receiver"]:
+                return self.needs_basic_info
+            elif params.get("type") in [None, "sep6-withdraw"]:
+                return self.needs_all_info
+            else:
+                raise ValueError(
+                    _("invalid 'type'. see /info response for valid values.")
                 )
-            except ValueError as e:
-                return render_error_response(str(e), status_code=400)
-            except ObjectDoesNotExist as e:
-                return render_error_response(str(e), status_code=404)
 
-            try:
-                validate_response_data(response_data)
-            except ValueError:
-                logger.exception(
-                    "An exception was raised validating GET /customer response"
+        response_data = {"id": str(user.id)}
+        basic_info_accepted = {
+            "provided_fields": {
+                "first_name": {
+                    "description": "first name of the customer",
+                    "type": "string",
+                    "status": "ACCEPTED",
+                },
+                "last_name": {
+                    "description": "last name of the customer",
+                    "type": "string",
+                    "status": "ACCEPTED",
+                },
+                "email_address": {
+                    "description": "email address of the customer",
+                    "type": "string",
+                    "status": "ACCEPTED",
+                },
+            }
+        }
+        if (user.bank_number and user.bank_account_number) or (
+            params.get("type") in ["sep6-deposit", "sep31-sender", "sep31-receiver"]
+        ):
+            response_data.update(self.accepted)
+            response_data.update(basic_info_accepted)
+            if user.bank_number and user.bank_account_number:
+                response_data["provided_fields"].update(
+                    {
+                        "bank_account_number": {
+                            "description": "bank account number of the customer",
+                            "type": "string",
+                            "status": "ACCEPTED",
+                        },
+                        "bank_number": {
+                            "description": "routing number of the customer",
+                            "type": "string",
+                            "status": "ACCEPTED",
+                        },
+                    }
                 )
-                return render_error_response(
-                    _("unable to process request."), status_code=500
-                )
-
-        return Response(response_data)
-
-    # delete
-    @validate_sep10_token()
-    def delete(self, SEP10Token, request, account, memo, memo_type, *arg, **kwargs):
-
-        account = CustomerStellarAccount.objects.get(account=account, memo=memo, memo_type=memo_type)
-        if account:
-            account.delete()
+        elif params.get("type") in [None, "sep6-withdraw"]:
+            response_data.update(basic_info_accepted)
+            response_data.update(self.needs_bank_info)
         else:
-            raise ObjectDoesNotExist("account does not exit")
+            raise ValueError(_("invalid 'type'. see /info response for valid values."))
+        return response_data
 
+       
         
+        
+       
+    
+    def delete(self,token: SEP10Token,request: Request, account: str,memo:str,memo_type:str):
+            if account:
+                customerId = CustomerStellarAccount.objects.filter(stellar_account=account).first()
+                print("customerId",customerId)
+                if customerId is None:
+                    print("customer error")
+                    raise ObjectDoesNotExist("account not found")
+                else:
+                    customerId.delete()
 
 def validate_response_data(data: Dict):
     attrs = ["fields", "id", "message", "status", "provided_fields"]
@@ -216,3 +333,5 @@ def validate_fields(fields: Dict, provided=False):
             raise ValueError(
                 f"bad error value for '{key}' in SEP-12 GET /customer response"
             )
+
+ 
