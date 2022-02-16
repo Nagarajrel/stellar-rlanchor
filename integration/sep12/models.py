@@ -5,12 +5,14 @@ from model_utils import Choices
 class Customer(models.Model):
     id = models.AutoField(primary_key=True)
     email = models.EmailField(unique=True)
-    phone = models.CharField(unique=True, max_length=56)
     first_name = models.CharField(max_length=254)
     last_name = models.CharField(max_length=254)
     additional_name = models.CharField(max_length=254, null=True, blank=True)
     bank_number = models.CharField(max_length=254, null=True, blank=True)
     bank_account_number = models.CharField(max_length=254, null=True, blank=True)
+
+    def __str__(self):
+        return self.first_name
 
 
 class CustomerStellarAccount(models.Model):

@@ -8,9 +8,11 @@ class IntegrationAppConfig(AppConfig):
         from .sep1.toml import toml
         from .sep24.rails import MyRailsIntegration
         from .sep31.sep31 import MySEP31ReceiverIntegration
+        from .sep12.customers import MyCustomerIntegration
         from polaris.integrations import register_integrations
         register_integrations(
             toml=toml,
             rails=MyRailsIntegration(),
             sep31_receiver=MySEP31ReceiverIntegration(),
+            customer=MyCustomerIntegration()
         )
