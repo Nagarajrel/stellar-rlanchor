@@ -36,9 +36,9 @@ class MySEP31ReceiverIntegration(SEP31ReceiverIntegration):
             },
             "fields": {
                 "transaction": {
-                    # "routing_number": {
-                    #     "description": "routing number of the destination bank account"
-                    # },
+                    "routing_number": {
+                        "description": "routing number of the destination bank account"
+                    },
                     "account_number": {
                         "description": "bank account number of the destination"
                     },
