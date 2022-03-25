@@ -4,7 +4,6 @@ from rest_framework.request import Request
 
 def toml(request: Request):
     asset = Asset.objects.first()
-    print(asset)
     return {
         "DOCUMENTATION": {
             "ORG_NAME": "Relevance Lab",
