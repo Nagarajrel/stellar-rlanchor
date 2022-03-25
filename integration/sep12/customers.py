@@ -1,8 +1,7 @@
 from polaris.integrations import CustomerIntegration
 from polaris.sep10.token import SEP10Token
-from polaris.utils import  extract_sep9_fields, getLogger
-
-
+from polaris.utils import extract_sep9_fields, getLogger
+from django.utils.translation import gettext as _
 from rest_framework.request import Request
 from typing import Dict
 from django.core.exceptions import ObjectDoesNotExist
@@ -104,7 +103,7 @@ class MyCustomerIntegration(CustomerIntegration):
                         bank_account_number=params.get("bank_account_number"),
                         # phone=params.get('phone_number')
                     )
-                account = CustomerStellarAccount.objects.create(
+                CustomerStellarAccount.objects.create(
                     customer=user,
                     stellar_account=stellar_account,
                     muxed_account=muxed_account,
@@ -121,7 +120,6 @@ class MyCustomerIntegration(CustomerIntegration):
         user.last_name = params.get("last_name") or user.last_name
         user.additional_name = params.get("additional_name") or user.additional_name
         user.bank_number = params.get("bank_number") or user.bank_number
-        # user.phone = params.get("phone_number") or user.phone_number
         user.bank_account_number = (
                 params.get("bank_account_number") or user.bank_account_number
         )
@@ -158,7 +156,7 @@ class MyCustomerIntegration(CustomerIntegration):
                 return self.needs_all_info
             else:
                 raise ValueError(
-                    ("invalid 'type'. see /info response for valid values.")
+                    "invalid 'type'. see /info response for valid values."
                 )
 
         response_data = {"id": str(user.id)}
@@ -208,15 +206,13 @@ class MyCustomerIntegration(CustomerIntegration):
             raise ValueError(_("invalid 'type'. see /info response for valid values."))
         return response_data
 
-    def delete(self, token: SEP10Token, request: Request, account: str, memo: str, memo_type: str):
+    def delete(self, token: SEP10Token, request: Request, account: str, memo: str, memo_type: str, *args, **kwargs):
         if account:
-            customerId = CustomerStellarAccount.objects.filter(stellar_account=account).first()
-            print("customerId", customerId)
-            if customerId is None:
-                print("customer error")
+            customer_id = CustomerStellarAccount.objects.filter(stellar_account=account).first()
+            if customer_id is None:
                 raise ObjectDoesNotExist("account not found")
             else:
-                customerId.delete()
+                customer_id.delete()
 
 
 def validate_response_data(data: Dict):

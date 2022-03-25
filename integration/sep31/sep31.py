@@ -1,5 +1,4 @@
-from decimal import Decimal
-from typing import Optional, Dict, List
+from typing import Optional, Dict
 from rest_framework.request import Request
 from django.utils.translation import gettext as _
 from polaris.integrations import SEP31ReceiverIntegration
@@ -70,25 +69,6 @@ class MySEP31ReceiverIntegration(SEP31ReceiverIntegration):
             receiving_user.bank_account_number = transaction_fields["account_number"]
             receiving_user.bank_number = transaction_fields["routing_number"]
             receiving_user.save()
-        # print(transaction)
-        # transaction.amount_fee = round(
-        #     transaction.asset.send_fee_fixed
-        #     + (
-        #             transaction.asset.send_fee_percent
-        #             / Decimal(100)
-        #             * transaction.amount_in
-        #     ),
-        #     transaction.asset.significant_decimals,
-        # )
-        # transaction.fee_asset = params["asset_code"]
-        # if not transaction.quote:
-        #     transaction.amount_out = round(
-        #         transaction.amount_in - transaction.amount_fee,
-        #         transaction.asset.significant_decimals,
-        #     )
-        # else:
-        #     transaction.quote.save()
-        # transaction.save()
 
     def process_patch_request(
             self,

@@ -1,6 +1,5 @@
-from polaris.models import Asset, Transaction
+from polaris.models import Transaction
 from typing import List, Dict
-from rest_framework.request import Request
 from polaris.integrations import RailsIntegration
 from django.db.models import QuerySet
 
