@@ -3,7 +3,18 @@ from rest_framework.request import Request
 
 
 def toml(request: Request):
-    asset = Asset.objects.first()
+    asset_list = Asset.objects.all()
+    curr_list = []
+    for asset in asset_list:
+        curr_list.append({
+            "code": asset.code,
+            "issuer": asset.issuer,
+            "status": "test",
+            "display_decimals" : 2,
+            "name": "test",
+            "desc": "Fake asset on testnet"
+        })
+
     return {
         "DOCUMENTATION": {
             "ORG_NAME": "Relevance Lab",
@@ -13,14 +24,5 @@ def toml(request: Request):
             "name": "Rahul Kumar"
         },
         ],
-        "CURRENCIES": [
-            {
-                "code": asset.code,
-                "issuer": asset.issuer,
-                "status": "test",
-                "display_decimals": 2,
-                "name": "test",
-                "desc": "Fake asset on testnet"
-            }
-        ]
+        "CURRENCIES": curr_list
     }
