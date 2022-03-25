@@ -55,8 +55,8 @@ class MySEP31ReceiverIntegration(SEP31ReceiverIntegration):
             **kwargs,
     ) -> Optional[Dict]:
         receiver_id = params.get("receiver_id")
-        info_fields = params.get("fields", {})
-        transaction_fields = info_fields.get("transaction", {})
+        info_fields = params.get("fields")
+        transaction_fields = info_fields.get("transaction")
         for field, val in transaction_fields.items():
             if not isinstance(val, str):
                 return {"error": f"'{field}'" + _(" is not of type str")}
@@ -79,8 +79,8 @@ class MySEP31ReceiverIntegration(SEP31ReceiverIntegration):
             *args,
             **kwargs,
     ):
-        info_fields = params.get("fields", {})
-        transaction_fields = info_fields.get("transaction", {})
+        info_fields = params.get("fields")
+        transaction_fields = info_fields.get("transaction")
         if not isinstance(transaction_fields, dict):
             raise ValueError("'transaction' value must be an object")
         possible_fields = set()
@@ -107,5 +107,4 @@ class MySEP31ReceiverIntegration(SEP31ReceiverIntegration):
     def valid_sending_anchor(
             self, token: SEP10Token, request: Request, public_key: str, *args, **kwargs
     ) -> bool:
-        # A real anchor would check if public_key belongs to a partner anchor
         return True
